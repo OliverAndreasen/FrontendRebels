@@ -57,3 +57,8 @@
     margin-top: 25px;
 }
 
+.active-filter {
+    background-color: #013369 !important;
+    color: white !important;
+}
+

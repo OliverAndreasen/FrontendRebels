@@ -3,13 +3,15 @@
 
     <div class="match-wrapper">
         <div class="match-date-time">
+            <h5 class="starttime" id="match-date"></h5>
+            <div></div>
             <h5 class="starttime" id="starttime"></h5>
         </div>
         <div class="match-teams">
             <div class="col-5 left">
                 <div class="hometeam">
-                    <img class="hometeam-img" src="" />
                     <h4 id="hometeam"></h4>
+                    <img class="hometeam-img" src="" />
                 </div>
             </div>
             <div class="col-8 right">
@@ -20,7 +22,7 @@
             </div>
         </div>
         <div class="match-info">
-            <div id="address">Dildhaven 40, 2730 Herlev</div>
+            <div id="address"></div>
         </div>
     </div>
 
@@ -32,7 +34,10 @@
             <button id="signup-button" class="btn">Tilmeld</button>
         </div>
         <div id="accepted" class="col-5">
-            <h2>Accepteret dommere</h2>
+            <div id="number-of-referees">
+                <h2>Accepteret dommere</h2>
+                <h2 id="number-of-accepted-referees"></h2>
+            </div>
             <ul id="accepted-list"></ul>
         </div>
     </div>

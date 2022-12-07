@@ -1,10 +1,6 @@
-import { handleHttpErrors } from "../../utils.js";
-const matchesUrl = "http://localhost:8080/api/matches/";
-const teamsUrl = "http://localhost:8080/api/teams";
-const signupsUrl = "http://localhost:8080/api/signups/findSignups/";
-const addSignUpUrl = "http://localhost:8080/api/signups";
-const refereeUrl = "http://localhost:8080/api/users/referee";
-let teamsKeyValue = new Map();
+import { handleHttpErrors, capitalizeFirstLetter } from "../../utils.js";
+import { matchesUrl, teamsUrl, refereeUrl, signupsUrl, addSignUpUrl } from "../../settings.js";
+
 let user;
 let matchId;
 let globalMatch;
@@ -17,31 +13,29 @@ async function setup() {
     matchId = getMatchIdFromUrl();
     const match = await fetch(matchesUrl + matchId).then(handleHttpErrors);
     globalMatch = match;
-    const teams = await fetch(teamsUrl).then(handleHttpErrors);
     const signups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
-    createKeyValuePairs(teams);
     displayMatch(match);
     displaySignups(signups);
     displayAccepted(match);
     user = await getUser();
+    document.querySelector(".error").innerHTML = "";
 }
 
 async function displaySignups(signups) {
     const signupList = document.querySelector("#signup-list");
     const signupListClone = signupList.cloneNode(true);
     signupList.parentNode.replaceChild(signupListClone, signupList);
-    document.querySelector(".error").textContent = "";
 
     signupListClone.innerHTML = "";
     let listData = signups
         .map(
             (s) =>
                 `
-        <div class = "list-item">
-        <li id="${s.id}">${s.refereeUsername}</li> 
-        <button class = "btn">+</button>
-        </div>
-        `
+                <div class = "list-item">
+                <li id="${s.id}">${s.refereeUsername}</li> 
+                <button class = "btn">+</button>
+                </div>
+            `
         )
         .join("\n");
     signupListClone.innerHTML = DOMPurify.sanitize(listData);
@@ -66,6 +60,7 @@ function displayAccepted(match) {
         )
         .join("\n");
     acceptedList.innerHTML = DOMPurify.sanitize(listData);
+    document.querySelector("#number-of-accepted-referees").innerText = match.acceptedReferees.length + " / " + match.numberOfReferees;
 }
 
 function getMatchIdFromUrl() {
@@ -75,21 +70,26 @@ function getMatchIdFromUrl() {
 }
 
 function displayMatch(matchData) {
-    document.querySelector("#hometeam").innerHTML = DOMPurify.sanitize(teamsKeyValue.get(matchData.homeTeamId));
-    document.querySelector("#awayteam").innerHTML = DOMPurify.sanitize(teamsKeyValue.get(matchData.awayTeamId));
-    document.querySelector("#starttime").innerHTML = matchData.startTime;
-}
+    const homeTeam = capitalizeFirstLetter(matchData.homeTeamName);
+    const awayteam = capitalizeFirstLetter(matchData.awayTeamName);
+    document.querySelector("#hometeam").innerHTML = homeTeam + " " + matchData.divisionName;
+    document.querySelector("#awayteam").innerHTML = awayteam + " " + matchData.divisionName;
+    document.querySelector("#address").innerHTML = matchData.address;
+    document.querySelector(".hometeam-img").src = "./images/logos/" + matchData.homeTeamImg + ".png";
+    document.querySelector(".awayteam-img").src = "./images/logos/" + matchData.awayTeamImg + ".png";
 
-function createKeyValuePairs(teams) {
-    for (let i = 0; i < teams.length; i++) {
-        teamsKeyValue.set(teams[i].id, teams[i].name);
-    }
+    const matchDateTime = matchData.startTime.split("T");
+    document.querySelector("#starttime").innerHTML = matchDateTime[1];
+    document.querySelector("#match-date").innerHTML = matchDateTime[0];
 }
 
 async function addSignUp() {
     const signUpObject = {};
     signUpObject.matchId = matchId;
-    signUpObject.refereeUsername = user.username;
+    signUpObject.refereeUsername = "";
+    if (user != undefined) {
+        signUpObject.refereeUsername = user.username;
+    }
     signUpObject.position = "ref";
 
     const options = {};
@@ -97,20 +97,19 @@ async function addSignUp() {
     options.headers = { "Content-type": "application/json" };
     options.body = JSON.stringify(signUpObject);
 
-    const signups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
-    const refereeIsSignedUp = await checkIfRefereeIsSignedUp(signups);
-    const refereeIsAccepted = await checkIfRefereeIsAdded(user.username);
+    await fetch(addSignUpUrl, options)
+        .then(handleHttpErrors)
+        .catch((err) => {
+            displayError(err.message);
+        });
 
-    if (!refereeIsSignedUp && !refereeIsAccepted) {
-        const addSignUp = await fetch(addSignUpUrl, options).then(handleHttpErrors);
-        const signups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
-        displaySignups(signups);
-    } else {
-        document.querySelector(".error").textContent = "Dommer allerede tilmeldt";
-    }
+    const newSignups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
+    displaySignups(newSignups);
 }
 
 async function addAccepted(refereeUsername, signupId) {
+    if (!(await checkUserEligibility())) return;
+
     const acceptedObject = {};
     acceptedObject.matchId = matchId;
     acceptedObject.username = refereeUsername;
@@ -121,22 +120,16 @@ async function addAccepted(refereeUsername, signupId) {
     options.headers = { "Content-type": "application/json" };
     options.body = JSON.stringify(acceptedObject);
 
-    const refereeIsAccepted = await checkIfRefereeIsAdded(refereeUsername);
-    const refereeTeam = await fetch(teamsUrl + "/" + globalMatch.refereeTeamId).then(handleHttpErrors);
+    await fetch(matchesUrl, options)
+        .then(handleHttpErrors)
+        .catch((err) => {
+            displayError(err.message);
+        });
 
-    if (user.clubName == refereeTeam.club) {
-        if (!refereeIsAccepted) {
-            const addAccepted = await fetch(matchesUrl, options).then(handleHttpErrors);
-            const signups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
-            const accepted = await fetch(matchesUrl + matchId).then(handleHttpErrors);
-            displaySignups(signups);
-            displayAccepted(accepted);
-        } else {
-            document.querySelector(".error").textContent = "Dommeren er allerede accepteret.";
-        }
-    } else {
-        document.querySelector(".error").textContent = "Du er ikke dommeransvarlig for denne klub.";
-    }
+    const signups = await fetch(signupsUrl + matchId).then(handleHttpErrors);
+    const accepted = await fetch(matchesUrl + matchId).then(handleHttpErrors);
+    displaySignups(signups);
+    displayAccepted(accepted);
 }
 
 async function getUser() {
@@ -147,20 +140,23 @@ async function getUser() {
     return await fetch(refereeUrl, options).then(handleHttpErrors);
 }
 
-async function checkIfRefereeIsSignedUp(signups) {
-    for (let i = 0; i < signups.length; i++) {
-        if (signups[i].refereeUsername === user.username) {
-            return true;
-        }
-    }
-    return false;
-}
-
-async function checkIfRefereeIsAdded(refereeUsername) {
-    const match = await fetch(matchesUrl + matchId).then(handleHttpErrors);
-    if (match.acceptedReferees.includes(refereeUsername)) {
-        return true;
-    } else {
+async function checkUserEligibility() {
+    if (user == undefined) {
+        displayError("Du er ikke logget ind.");
         return false;
     }
+    if (!user.roles.includes("REFEREEMANAGER")) {
+        displayError("Du er ikke dommeransvarlig");
+        return false;
+    }
+    const refereeTeam = await fetch(teamsUrl + globalMatch.refereeTeamId).then(handleHttpErrors);
+    if (user.clubName != refereeTeam.club) {
+        displayError("Du er ikke medlem af denne klub");
+        return;
+    }
+    return true;
+}
+
+function displayError(msg) {
+    document.querySelector(".error").textContent = msg;
 }

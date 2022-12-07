@@ -1,3 +1,5 @@
+export const token = "Bearer " + localStorage.getItem("token")
+
 export function renderTemplate(template, contentId) {
   const content = document.getElementById(contentId);
   if (!content) {
@@ -118,4 +120,45 @@ export async function checkAccess(role){
   catch(e){
      return false;
   }
+
 }
+
+export function hasWhiteSpace(s) {
+  return s.includes(" ")
+}
+
+export function validateAllObjectWhiteSpaces(object){
+  for (const field in object){
+    var input = object[field]
+    if(hasWhiteSpace(input)) {
+      return true
+    }
+  }
+  return false
+}
+
+export function checkIfEmptyObject(object) {
+  for (const field in object) {
+    if (object[field] === "") {
+      return true
+    }
+  }
+  return false;
+}
+
+
+export function createErrorMessage(message){
+
+  const errorDiv = document.querySelector("#error")
+  errorDiv.innerHTML = message
+  errorDiv.removeAttribute("hidden")
+}
+
+export function capitalizeFirstLetter(string){
+  const firstLetter = string.charAt(0)
+  const firstLetterCap = firstLetter.toUpperCase()
+  const remainingLetters = string.slice(1)
+
+  return  firstLetterCap + remainingLetters  
+}
+

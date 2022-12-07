@@ -1,18 +1,17 @@
-const teamURL = "http://localhost:8080/api/teams/";
-import {handleHttpErrors} from "../../utils.js";
+import {teamsUrl} from "../../settings.js";
+import {handleHttpErrors, capitalizeFirstLetter} from "../../utils.js";
 
 export function initTeam() {
   window.addEventListener("load", getTeam());
 }
 
 async function getTeam() {
-    const teamName = teamURL + getTeamFromUrl();
+    const teamName = teamsUrl + getTeamFromUrl();
     await fetch(teamName)
         .then(handleHttpErrors)
         .then(data => {
-        console.log(data);
         document.querySelector("#input-team-name").innerHTML = DOMPurify.sanitize(data.name);
-        document.querySelector("#input-team-club").innerHTML = DOMPurify.sanitize(data.club);
+        document.querySelector("#input-team-club").innerHTML = DOMPurify.sanitize(capitalizeFirstLetter(data.club));
         document.querySelector("#team-name-header").innerHTML = DOMPurify.sanitize(data.name)
         });
 }

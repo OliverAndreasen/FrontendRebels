@@ -66,3 +66,21 @@
 .error {
     color: red;
 }
+
+.match-teams img {
+    width: 30px;
+    height: 30px;
+}
+
+#match-date{
+    margin-right: 40px;
+}
+
+#starttime{
+    margin-left: 40px;
+}
+
+#number-of-referees{
+    display: flex;
+    justify-content: space-evenly;
+}

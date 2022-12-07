@@ -1,18 +1,20 @@
-import { matchesUrl } from "../../settings.js";
+import { refereeUrl, myMatchesSignups } from "../../settings.js";
 import { handleHttpErrors, capitalizeFirstLetter } from "../../utils.js";
-let matches;
 
-export function initAllMatches() {
+export function initMyMatches() {
     setup();
 }
+
+let matches;
 
 async function setup() {
     matches = await getAllMatches();
     displayMatches(matches);
-    filterButtons();
 }
 
 async function getAllMatches() {
+    const username = await getUserName();
+    const matchesUrl = myMatchesSignups + username;
     const matches = await fetch(matchesUrl).then(handleHttpErrors);
     return matches;
 }
@@ -54,19 +56,25 @@ function displayMatch(m) {
 
     match.id = "match-id" + m.id;
 
-    for (let i = 0; i < m.numberOfReferees; i++) {
-        const newRefereeIcon = document.createElement("i");
-        newRefereeIcon.classList.add("fa-solid");
-        newRefereeIcon.classList.add("fa-user");
-        clone.querySelector(".referees").appendChild(newRefereeIcon);
-        for (let j = 0; j < m.acceptedReferees.length; j++) {
-            if (i < m.acceptedReferees.length) {
-                newRefereeIcon.style.color = "Green";
-            }
+    const amountOfAcceptedReferees = m.acceptedReferees;
+    const refereeNodes = clone.querySelectorAll(".referees");
+    if (amountOfAcceptedReferees != 0) {
+        for (let i = 0; i < amountOfAcceptedReferees.length; i++) {
+            refereeNodes[0].children[i].style.color = "Green";
         }
     }
+
     match.appendChild(clone);
     matchContent.append(match);
+}
+
+async function getUserName() {
+    const token = "Bearer " + localStorage.getItem("token");
+    const options = {};
+    options.method = "GET";
+    options.headers = { Authorization: token };
+    const response = await fetch(refereeUrl, options).then(handleHttpErrors);
+    return response.username;
 }
 
 function matchButtons(matchId) {
@@ -74,33 +82,4 @@ function matchButtons(matchId) {
     matchId = matchSplit[1];
     const link = "#/match?matchId=" + matchId;
     location.href = link;
-}
-
-function filterButtons() {
-    const buttons = document.querySelector(".btns");
-
-    buttons.addEventListener("mouseup", (e) => {
-        if (e.target.tagName.toLowerCase() == "button") {
-            clearFilterButtons();
-            e.target.classList.add("active-filter");
-            const divisionId = e.target.id;
-            filterMatches(divisionId);
-        }
-    });
-}
-
-function clearFilterButtons() {
-    const buttons = document.querySelectorAll(".btn");
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove("active-filter");
-    }
-}
-
-function filterMatches(divisionId) {
-    if (divisionId === "alle") {
-        displayMatches(matches);
-        return;
-    }
-    const filteredMatches = matches.filter((m) => m.divisionName == divisionId);
-    displayMatches(filteredMatches);
 }
