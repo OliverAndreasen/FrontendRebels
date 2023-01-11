@@ -105,7 +105,7 @@ export function encode(str) {
 
 
 export async function checkAccess(role){
-  const loginUrl = "http://localhost:8080/api/login/" + role;
+  const loginUrl = "https://eksamenoliver.azurewebsites.net/api/login/" + role;
   const token = "Bearer " + localStorage.getItem("token")
 
   const options = {}
