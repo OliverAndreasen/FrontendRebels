@@ -1,6 +1,6 @@
 import {checkAccess, handleHttpErrors, token} from "./utils.js";
 
-const userUrl = "http://localhost:8080/api/login/user-fromtoken";
+const userUrl = "https://eksamenoliver.azurewebsites.net/api/login/user-fromtoken";
 window.addEventListener("load", checkLoginStatusAndCreateNavBar())
 
 async function checkLoginStatusAndCreateNavBar() {
