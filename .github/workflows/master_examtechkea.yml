@@ -49,5 +49,5 @@ jobs:
         with:
           app-name: 'ExamTechKEA'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A3FC859873374A4A97761D01FF3B3EE3 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A1BAFF35157540FEBD90865D614E7863 }}
           package: '*.jar'
