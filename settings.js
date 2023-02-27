@@ -1,4 +1,4 @@
-const ip = "https://eksamenoliver.azurewebsites.net/"
+const ip = "https://gray-hill-00f36dc03.2.azurestaticapps.net/"
 export const matchesUrl = ip + "api/matches/";
 export const teamsUrl = ip + "api/teams/";
 export const clubUrl = ip + "api/clubs/"
